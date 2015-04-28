@@ -1,0 +1,32 @@
+
+
+button{
+	background:none;
+	border:0;
+	margin:0;
+	padding:0;
+	width: 180px;
+	hight: 180px;
+	outline: none;
+}
+
+.button_wrapper button{
+	margin: 0 auto;
+	
+}
+
+#button0{ background-image: url(button_00.gif);}
+#button0:active{ background-image: url(button_a_00.gif);}
+
+#button1{ background-image: url(button_01.gif);}
+#button1:active{ background-image: url(button_a_01.gif);}
+
+#button2{ background-image: url(button_02.gif);}
+#button2:active{ background-image: url(button_a_02.gif);}
+
+#button3{ background-image: url(button_03.gif);}
+#button3:active{ background-image: url(button_a_03.gif);}
+
+#button4{ background-image: url(button_04.gif);}
+#button4:active{ background-image: url(button_a_04.gif);}
+

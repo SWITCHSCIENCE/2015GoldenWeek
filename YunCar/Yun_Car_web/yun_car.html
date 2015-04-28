@@ -1,0 +1,41 @@
+<html>
+<head>
+<title>Yun Controller</title>
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<script src="jquery-1.11.2.min.js"></script>
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<link href="static/style.css" rel="stylesheet" type="text/css">
+
+<SCRIPT langage="JavaScript">
+	function command(cnum){
+		$.get("/arduino/"+cnum+"/1");
+	}
+
+</SCRIPT>
+</head>
+
+
+<body>
+<div style="text-align:center;">
+<button type="button" id="button1" onclick="command('FORWARD')">
+	<img src="static/clear.png" width="180" height="180">
+</button>
+</div>
+<div style="text-align:center;">
+<button type="button" id="button3" onclick="command('LEFT')">
+	<img src="static/clear.png" width="180" height="180">
+</button>
+<button type="button" id="button0" onclick="command('STOP')">
+	<img src="static/clear.png" width="180" height="180">
+</button>
+<button type="button" id="button4" onclick="command('RIGHT')">
+	<img src="static/clear.png" width="180" height="180">
+</button>
+</div>
+<div style="text-align:center;">
+<button type="button" id="button2" onclick="command('BACK')">
+	<img src="static/clear.png" width="180" height="180">
+</button>
+</div>
+</body>
+</html>
