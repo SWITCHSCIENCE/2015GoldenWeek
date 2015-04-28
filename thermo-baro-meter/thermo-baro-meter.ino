@@ -4,27 +4,18 @@
 
 #define PIXEL_NUM 20    //使用するWS2822Sの数
 #define LED_PIN 14      //WS2822SのDAIピンにつなげるArduinoのピン番号
-#define BME280_ADDRESS 0x76
+#define BME280_ADDRESS 0x76  // BME280のI2Cアドレス
 
 unsigned long int hum_raw, temp_raw, pres_raw;
 signed long int t_fine;
 unsigned long  runtime_next;
-//unsigned long  interval = 60*60*1000L;
-unsigned long  interval = 10*60*1000L;
-//unsigned long  interval = 3*1000L;
+unsigned long  interval = 60 * 60 * 1000L;  // 60分×60秒×1000ms
 
+// 変換用変数
 uint16_t dig_T1;
-int16_t dig_T2;
-int16_t dig_T3;
+int16_t dig_T2, dig_T3;
 uint16_t dig_P1;
-int16_t dig_P2;
-int16_t dig_P3;
-int16_t dig_P4;
-int16_t dig_P5;
-int16_t dig_P6;
-int16_t dig_P7;
-int16_t dig_P8;
-int16_t dig_P9;
+int16_t dig_P2, dig_P3, dig_P4, dig_P5, dig_P6, dig_P7, dig_P8, dig_P9;
 int8_t  dig_H1;
 int16_t dig_H2;
 int8_t  dig_H3;
@@ -34,26 +25,26 @@ int8_t  dig_H6;
 
 Ws2822s LED(LED_PIN , PIXEL_NUM);
 
-int tempColor_R[] = {0, 12, 90, 160, 200, 225, 240, 250, 250, 250, 250};
-int tempColor_G[] = {0, 0, 0, 0, 0, 40, 90, 140, 190, 240, 250};
-int tempColor_B[] = {0, 120, 150, 150, 120, 10, 0, 0, 10, 120, 250};
-int baroColor_R[] = {125, 100, 75, 50, 25, 0, 0, 0, 0, 0, 0};
-int baroColor_G[] = {0, 0, 25, 50, 75, 100, 75, 50, 25, 0, 0};
-int baroColor_B[] = {0, 0, 0, 0, 0, 0, 25, 50, 75, 100, 125};
-int tempMem_R[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int tempMem_G[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int tempMem_B[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int baroMem_R[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int baroMem_G[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int baroMem_B[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int tempTable[] = {20, 30};
-long baroTable[] = {950, 1050};
+int tempColor_R[] = {0, 6, 45, 80, 100, 110, 120, 125, 125, 125, 125}; // 温度 色変化テーブル(赤)
+int tempColor_G[] = {0, 0, 0, 0, 0, 20, 45, 70, 95, 120, 125};         // 温度 色変化テーブル(緑)
+int tempColor_B[] = {0, 60, 75, 75, 60, 5, 0, 0, 5, 60, 125};          // 温度 色変化テーブル(青)
+int baroColor_R[] = {125, 100, 75, 50, 25, 0, 0, 0, 0, 0, 0};          // 気圧 色変化テーブル(赤)
+int baroColor_G[] = {0, 0, 25, 50, 75, 100, 75, 50, 25, 0, 0};         // 気圧 色変化テーブル(緑)
+int baroColor_B[] = {0, 0, 0, 0, 0, 0, 25, 50, 75, 100, 125};          // 気圧 色変化テーブル(青)
+int tempMem_R[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};          // 温度用メモリ確保(赤)
+int tempMem_G[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};          // 温度用メモリ確保(緑)
+int tempMem_B[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};          // 温度用メモリ確保(青)
+int baroMem_R[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};          // 気圧用メモリ確保(赤)
+int baroMem_G[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};          // 気圧用メモリ確保(緑)
+int baroMem_B[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};          // 気圧用メモリ確保(青)
+int tempTable[] = {20, 30};                      // 温度範囲の指定
+long baroTable[] = {950, 1050};                  // 気圧範囲の指定
 
+// LEDに色をセットする関数
 void write_color()
 {
   LED.send();
 }
-
 
 void setup()
 {
@@ -84,12 +75,7 @@ void setup()
   writeReg(0xF4, ctrl_meas_reg);
   writeReg(0xF5, config_reg);
   readTrim();                   // Read trim data from BME280
-  runtime_next = millis() + interval;
-  Serial.print("millis:");
-  Serial.print(millis());
-  Serial.print(" next:");
-  Serial.println(runtime_next);
-  Serial.println(interval);
+  runtime_next = millis() + interval; // 次にLEDを更新する時間を決める
 }
 
 
@@ -119,10 +105,10 @@ void loop()
   // --------------------------------------
 
   // 一つ前のLEDの色データを次のLEDに送る (温度編)
-  for (int i = 8; i >= 0; i--) {
-    tempMem_R[i + 1] = tempMem_R[i];
-    tempMem_G[i + 1] = tempMem_G[i];
-    tempMem_B[i + 1] = tempMem_B[i];
+  for (int i = 1; i <= 9; i++) {
+    tempMem_R[i - 1] = tempMem_R[i];
+    tempMem_G[i - 1] = tempMem_G[i];
+    tempMem_B[i - 1] = tempMem_B[i];
   }
 
   // 設定した最低、最高温度を0-999とした時の、現在の温度を計算する
@@ -132,18 +118,18 @@ void loop()
 
   // 表示用メモリにRGB値を設定する
   // 足し算の前半でおおまかな色を決めて、足し算の後半で滑らかに色が変化するように細かい数字を足す
-  tempMem_R[0] = tempColor_R[(int)tt / 100] + ((tempColor_R[(int)tt / 100 + 1] - tempColor_R[(int)tt / 100]) * (tt % 100)) / 100;
-  tempMem_G[0] = tempColor_G[(int)tt / 100] + ((tempColor_G[(int)tt / 100 + 1] - tempColor_G[(int)tt / 100]) * (tt % 100)) / 100;
-  tempMem_B[0] = tempColor_B[(int)tt / 100] + ((tempColor_B[(int)tt / 100 + 1] - tempColor_B[(int)tt / 100]) * (tt % 100)) / 100;
+  tempMem_R[9] = tempColor_R[(int)tt / 100] + ((tempColor_R[(int)tt / 100 + 1] - tempColor_R[(int)tt / 100]) * (tt % 100)) / 100;
+  tempMem_G[9] = tempColor_G[(int)tt / 100] + ((tempColor_G[(int)tt / 100 + 1] - tempColor_G[(int)tt / 100]) * (tt % 100)) / 100;
+  tempMem_B[9] = tempColor_B[(int)tt / 100] + ((tempColor_B[(int)tt / 100 + 1] - tempColor_B[(int)tt / 100]) * (tt % 100)) / 100;
 
   // --------------------------------------
   // 気圧をLEDバーの色に変換する
   // --------------------------------------
   // 一つ前のLEDの色データを次のLEDに送る (気圧編)
-  for (int i = 1; i < 10; i++) {
-    baroMem_R[i - 1] = baroMem_R[i];
-    baroMem_G[i - 1] = baroMem_G[i];
-    baroMem_B[i - 1] = baroMem_B[i];
+  for (int i = 8; i >= 0; i--) {
+    baroMem_R[i + 1] = baroMem_R[i];
+    baroMem_G[i + 1] = baroMem_G[i];
+    baroMem_B[i + 1] = baroMem_B[i];
   }
 
   // 設定した最低、最高気圧を0-999とした時の、現在の気圧を計算する
@@ -153,56 +139,25 @@ void loop()
 
   // 表示用メモリにRGB値を設定する
   // 足し算の前半でおおまかな色を決めて、足し算の後半で滑らかに色が変化するように細かい数字を足す
-  baroMem_R[9] = baroColor_R[(int)bt / 100] + ((baroColor_R[(int)bt / 100 + 1] - baroColor_R[(int)bt / 100]) * (bt % 100)) / 100;
-  baroMem_G[9] = baroColor_G[(int)bt / 100] + ((baroColor_G[(int)bt / 100 + 1] - baroColor_G[(int)bt / 100]) * (bt % 100)) / 100;
-  baroMem_B[9] = baroColor_B[(int)bt / 100] + ((baroColor_B[(int)bt / 100 + 1] - baroColor_B[(int)bt / 100]) * (bt % 100)) / 100;
-
-  // デバッグ用
-  Serial.print(tt);
-  Serial.print(" ");
-  Serial.print(tt / 100);
-  Serial.print(" R:");
-  Serial.print(tempMem_R[0]);
-  Serial.print(" G:");
-  Serial.print(tempMem_G[0]);
-  Serial.print(" B:");
-  Serial.print(tempMem_B[0]);
-  Serial.print(" ");
-  Serial.print(temp_act - tempTable[0]);
-  Serial.print(" ");
-  Serial.println(tempTable[1] - tempTable[0]);
-
-  Serial.print(bt);
-  Serial.print(" ");
-  Serial.print(bt / 100);
-  Serial.print(" R:");
-  Serial.print(baroMem_R[9]);
-  Serial.print(" G:");
-  Serial.print(baroMem_G[9]);
-  Serial.print(" B:");
-  Serial.print(baroMem_B[9]);
-  Serial.print(" ");
-  Serial.print(press_act - baroTable[0]);
-  Serial.print(" ");
-  Serial.println(baroTable[1] - baroTable[0]);
+  baroMem_R[0] = baroColor_R[(int)bt / 100] + ((baroColor_R[(int)bt / 100 + 1] - baroColor_R[(int)bt / 100]) * (bt % 100)) / 100;
+  baroMem_G[0] = baroColor_G[(int)bt / 100] + ((baroColor_G[(int)bt / 100 + 1] - baroColor_G[(int)bt / 100]) * (bt % 100)) / 100;
+  baroMem_B[0] = baroColor_B[(int)bt / 100] + ((baroColor_B[(int)bt / 100 + 1] - baroColor_B[(int)bt / 100]) * (bt % 100)) / 100;
 
   // LEDに色を設定する
   for (int i = 0; i < 10; i++) {
-    LED.setColor(i, tempMem_R[i]*.8, tempMem_G[i]*.8, tempMem_B[i]*.8);
-    LED.setColor(i + 10, baroMem_R[i], baroMem_G[i], baroMem_B[i]);
+    LED.setColor(i, baroMem_R[i], baroMem_G[i], baroMem_B[i]);
+    LED.setColor(i + 10, tempMem_R[i], tempMem_G[i], tempMem_B[i]);
   }
 
   while (runtime_next > millis()) {
+    // 指定された時間まで待つ
   }
-  runtime_next = millis() + interval;
-  Serial.print("millis:");
-  Serial.println(millis());
-  Serial.print(" next:");
-  Serial.println(runtime_next);
+  runtime_next = millis() + interval;  // 次にLEDが変化する時間を設定
 }
 
-
-
+// --------------------------------------------------------------
+// チップ固有の調整用データを読み出す
+// --------------------------------------------------------------
 void readTrim()
 {
   uint8_t data[33], i = 0;
@@ -248,6 +203,10 @@ void readTrim()
   dig_H5 = (data[30] << 4) | ((data[29] >> 4) & 0x0F);
   dig_H6 = data[31];
 }
+
+// --------------------------------------------------------------
+// BME280のレジスタに書き込む
+// --------------------------------------------------------------
 void writeReg(uint8_t reg_address, uint8_t data)
 {
   Wire.beginTransmission(BME280_ADDRESS);
@@ -256,7 +215,9 @@ void writeReg(uint8_t reg_address, uint8_t data)
   Wire.endTransmission();
 }
 
-
+// --------------------------------------------------------------
+// BME280のデータを読み出す
+// --------------------------------------------------------------
 void readData()
 {
   int i = 0;
@@ -274,10 +235,11 @@ void readData()
   hum_raw  = (data[6] << 8) | data[7];
 }
 
-
+// --------------------------------------------------------------
+// 温度を計算する
+// --------------------------------------------------------------
 signed long int calibration_T(signed long int adc_T)
 {
-
   signed long int var1, var2, T;
   var1 = ((((adc_T >> 3) - ((signed long int)dig_T1 << 1))) * ((signed long int)dig_T2)) >> 11;
   var2 = (((((adc_T >> 4) - ((signed long int)dig_T1)) * ((adc_T >> 4) - ((signed long int)dig_T1))) >> 12) * ((signed long int)dig_T3)) >> 14;
@@ -287,6 +249,9 @@ signed long int calibration_T(signed long int adc_T)
   return T;
 }
 
+// --------------------------------------------------------------
+// 気圧を計算する
+// --------------------------------------------------------------
 unsigned long int calibration_P(signed long int adc_P)
 {
   signed long int var1, var2;
@@ -316,6 +281,9 @@ unsigned long int calibration_P(signed long int adc_P)
   return P;
 }
 
+// --------------------------------------------------------------
+// 湿度を計算する
+// --------------------------------------------------------------
 unsigned long int calibration_H(signed long int adc_H)
 {
   signed long int v_x1;
